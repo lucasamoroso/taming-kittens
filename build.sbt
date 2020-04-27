@@ -1,7 +1,13 @@
-
 name := "taming-kittens"
 version := "0.1.0"
-scalacOptions += "-Ypartial-unification"
+scalacOptions ++= Seq(
+  "-feature",
+  "-deprecation",
+  "-unchecked",
+  "-language:postfixOps",
+  "-language:higherKinds",
+  "-Ypartial-unification",
+)
 crossScalaVersions := Seq("2.12.10", "2.13.1")
 resolvers += Resolver.sonatypeRepo("snapshots")
 
@@ -38,11 +44,10 @@ libraryDependencies ++= Seq(
   http4sCirce,
   htt4sDsl,
   logback,
-  fs2Kafka
+  fs2Kafka,
 )
 
 enablePlugins(ScalafmtPlugin)
 
 // Note: This fixes error with sbt run not loading config properly
 fork in run := true
-
