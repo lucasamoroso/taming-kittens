@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/taming-kittens.iml" filepath="$PROJECT_DIR$/.idea/modules/taming-kittens.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/taming-kittens-build.iml" filepath="$PROJECT_DIR$/.idea/modules/taming-kittens-build.iml" />
-    </modules>
-  </component>
-</project>
