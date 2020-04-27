@@ -1,29 +1,28 @@
 package com.lamoroso.taming.kittens.services
 
-import cats.Monad
-import cats.effect.{ContextShift, IO, Sync, Timer}
+import cats.{Applicative, Monad}
+import cats.effect.{ConcurrentEffect, ContextShift, IO, Sync, Timer}
 import fs2.kafka._
 
 
-class KafkaService[F[_]](implicit cs: ContextShift[IO], timer: Timer[IO]) {
-  implicit def messageDes: Deserializer[IO, String] =
-    Deserializer.lift(bytes => IO.pure(bytes.dropWhile(_ == 0).toString))
+class KafkaService[F[_]: Applicative: Sync]
+(implicit cs: ContextShift[F], timer: Timer[F], ce: ConcurrentEffect[F]) {
 
-  implicit def messageDeserializer(implicit M: Monad[F], f: Sync[F]): Deserializer[F, Array[Byte]] =
-    Deserializer.lift(bytes => M.pure(bytes.dropWhile(_ == 0)))
+  implicit def messageDeserializer: Deserializer[F, Array[Byte]] =
+    Deserializer.lift(bytes => Applicative[F].pure(bytes.dropWhile(_ == 0).toString))
 
 
-  def stream(group: String, topic: String): fs2.Stream[IO, (String, String)] = {
-    def processRecord(record: ConsumerRecord[String, String]): IO[(String, String)] =
-      IO.pure(record.key -> record.value)
+  def stream(group: String, topic: String): fs2.Stream[F, (String, String)] = {
+    def processRecord(record: ConsumerRecord[String, String]): F[(String, String)] =
+      Applicative[F].pure(record.key -> record.value)
 
     val consumerSettings =
-      ConsumerSettings[IO, String, String]
+      ConsumerSettings[F, String, String]
         .withAutoOffsetReset(AutoOffsetReset.Earliest)
         .withBootstrapServers("localhost:9092")
         .withGroupId(group)
 
-    consumerStream[IO]
+    consumerStream[F]
       .using(consumerSettings)
       .evalTap(_.subscribeTo(topic))
       .flatMap(_.stream)
