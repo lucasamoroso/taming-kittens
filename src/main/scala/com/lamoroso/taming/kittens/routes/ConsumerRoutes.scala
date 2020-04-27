@@ -10,8 +10,7 @@ class ConsumerRoutes[F[_] : Sync](streamConsumer: StreamConsumerAlgebra[F]) exte
 
   private def streamRoute(): HttpRoutes[F] = HttpRoutes.of[F] {
     case req@GET -> Root / group / topic =>
-      // streamConsumer.stream(group, topic).pull
-    Ok("To implement")
+      Ok(streamConsumer.stream(group, topic).map(_.toString()))
   }
 
 

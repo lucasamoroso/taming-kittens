@@ -20,7 +20,7 @@ class KafkaStreamConsumer[F[_]: Applicative: Sync](
     val consumerSettings =
       ConsumerSettings[F, String, String]
         .withAutoOffsetReset(AutoOffsetReset.Earliest)
-        .withBootstrapServers("localhost:9092")
+        .withBootstrapServers("localhost:29092")
         .withGroupId(group)
 
     consumerStream[F]
