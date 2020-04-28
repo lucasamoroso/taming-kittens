@@ -11,10 +11,13 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.{Router, Server => H4Server}
 
 object Server extends IOApp {
+  override def run(args: List[String]): IO[ExitCode] =
+    createServer.use(_ => IO.never).as(ExitCode.Success)
+
   def createServer[F[_]: ContextShift: ConcurrentEffect: Timer]: Resource[F, H4Server[F]] =
     for {
       conf <- Resource.liftF(parser.decodePathF[F, AppConfig]("app"))
-      streamConsumer = KafkaStreamConsumer[F]()
+      streamConsumer = KafkaStreamConsumer[F](conf.kafka.bootstrapServers)
       httpApp = Router(
         "/hello" -> HelloWordRoute(),
         "/stream" -> ConsumerRoutes[F](streamConsumer),
@@ -24,7 +27,4 @@ object Server extends IOApp {
         .withHttpApp(httpApp)
         .resource
     } yield server
-
-  override def run(args: List[String]): IO[ExitCode] =
-    createServer.use(_ => IO.never).as(ExitCode.Success)
 }
