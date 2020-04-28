@@ -1,8 +1,13 @@
 package com.lamoroso.taming.kittens.consumer.stream
 
+import java.util.concurrent.TimeUnit
+
 import cats.Applicative
 import cats.effect.{ConcurrentEffect, ContextShift, Sync, Timer}
+import cats.implicits._
 import fs2.kafka._
+
+import scala.concurrent.duration.FiniteDuration
 
 class KafkaStreamConsumer[F[_]: Applicative: Sync](bootstrapServers: String)(
     implicit cs: ContextShift[F],
@@ -20,16 +25,15 @@ class KafkaStreamConsumer[F[_]: Applicative: Sync](bootstrapServers: String)(
       .flatMap(_.stream)
       .mapAsync(42)(committable => processRecord(committable.record))
 
-  override def committableStream(group: String, topic: String): fs2.Stream[F, (String, String)] =
-    ???
-//    consumerStream[F]
-//      .using(consumerSettings(group, topic))
-//      .evalTap(_.subscribeTo(topic))
-//      .flatMap(_.stream)
-//      .mapAsync(42)(committable => processRecord(committable.record).as(committable.offset))
-//      .through(
-//        commitBatchWithin(500, FiniteDuration(15, TimeUnit.SECONDS)),
-//      ) //commits once every 500 offsets or 15 seconds, whichever happens first.
+  override def committableStream(group: String, topic: String): fs2.Stream[F, Unit] =
+    consumerStream[F]
+      .using(consumerSettings(group, topic))
+      .evalTap(_.subscribeTo(topic))
+      .flatMap(_.stream)
+      .mapAsync(42)(committable => processRecord(committable.record).as(committable.offset))
+      .through(
+        commitBatchWithin(500, FiniteDuration(15, TimeUnit.SECONDS)),
+      ) //commits once every 500 offsets or 15 seconds, whichever happens first.
 
   private def consumerSettings(group: String, topic: String): ConsumerSettings[F, String, String] =
     ConsumerSettings[F, String, String]

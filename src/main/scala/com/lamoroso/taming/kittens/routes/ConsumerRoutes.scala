@@ -13,6 +13,8 @@ class ConsumerRoutes[F[_]: Sync](streamConsumer: StreamConsumerAlgebra[F]) exten
   private def streamRoute(): HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ GET -> Root / group / topic =>
       Ok(streamConsumer.stream(group, topic).map(_._2))
+    case req @ GET -> Root / "committeable" / group / topic =>
+      Ok(streamConsumer.committableStream(group, topic))
   }
 
 }
