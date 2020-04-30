@@ -18,12 +18,14 @@ class KafkaStreamConsumer[F[_]: Applicative: Sync](bootstrapServers: String)(
   private implicit def messageDeserializer: Deserializer[F, String] =
     Deserializer.lift(bytes => Applicative[F].pure(new String(bytes)))
 
-  override def stream(group: String, topic: String): fs2.Stream[F, (String, String)] =
-    consumerStream[F]
-      .using(consumerSettings(group, topic))
-      .evalTap(_.subscribeTo(topic))
-      .flatMap(_.stream)
-      .mapAsync(42)(committable => processRecord(committable.record))
+  override def stream(group: String, topic: String): F[fs2.Stream[F, (String, String)]] =
+    Applicative[F].pure {
+      consumerStream[F]
+        .using(consumerSettings(group, topic))
+        .evalTap(_.subscribeTo(topic))
+        .flatMap(_.stream)
+        .mapAsync(42)(committable => processRecord(committable.record))
+    }
 
   override def committableStream(group: String, topic: String): fs2.Stream[F, Unit] =
     consumerStream[F]
